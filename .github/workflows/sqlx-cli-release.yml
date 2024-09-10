@@ -33,7 +33,6 @@ jobs:
           - os: macOS-latest
             target: aarch64-apple-darwin
             bin: target/debug/cargo-sqlx
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -49,10 +48,10 @@ jobs:
           --manifest-path sqlx-cli/Cargo.toml
           --bin cargo-sqlx
           ${{ matrix.args }}
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{ matrix.bin }}
-        asset_name: ${{ matrix.target }}
-        tag: ${{ github.ref }}
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ matrix.bin }}
+          asset_name: ${{ matrix.target }}
+          tag: ${{ github.ref }}
