@@ -1,0 +1,59 @@
+name: SQLx CLI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        # Note: macOS-latest uses M1 Silicon (ARM64)
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macOS-13
+          - macOS-latest
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            args: --features openssl-vendored
+            bin: target/debug/cargo-sqlx
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: target/debug/cargo-sqlx.exe
+          - os: macOS-13
+            target: x86_64-apple-darwin
+            bin: target/debug/cargo-sqlx
+          - os: macOS-latest
+            target: aarch64-apple-darwin
+            bin: target/debug/cargo-sqlx
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Use latest Rust
+        run: rustup override set stable
+      - name: Rust caching
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cli
+      - name: Build binaries
+        run: >
+          cargo build
+          --manifest-path sqlx-cli/Cargo.toml
+          --bin cargo-sqlx
+          ${{ matrix.args }}
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/release/${{ matrix.artifact_name }}
+        asset_name: ${{ matrix.asset_name }}
+        tag: ${{ github.ref }}
